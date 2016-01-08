@@ -71,16 +71,8 @@ func (a *afalg) Write(data []byte) (n int, err error) {
 		return 0, nil
 	}
 
-	// rats, go doesn't have a plain old send. the man page for the standard C
-	// call for send says sendto is identical, but with a null target address.
-	// go's stdlib assumes a non-nil sockaddr arg. so we have to make the
-	// syscall ourselves.
-	// additionally, because of this, i386 is hard. 6-argument syscalls are
-	// different on i386 and SYS_SENDTO doesn't exist.
-	_, _, e := syscall.Syscall6(syscall.SYS_SENDTO, uintptr(a.op_fd),
-		uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)),
-		uintptr(syscall.MSG_MORE), 0, 0)
-	if e != 0 {
+	_, e := syscall.Write(a.op_fd, data)
+	if e != nil {
 		return 0, e
 	}
 	return len(data), nil
